@@ -12,7 +12,7 @@ library(ggplot2)
 ```
 
 ```{r}
-hofpitching <- read_csv("/Users/Ricky/Projects/intro_baseball_analysis/data/hofpitching.csv")
+hofpitching <- read_csv("../data/hofpitching.csv")
 ```
 
 
@@ -90,4 +90,39 @@ ggplot(hofpitching, aes(WAR.Season, BF.group)) + geom_boxplot()
 The more batters face shows a tendency of higher WAR
 
 #### Exercise 4 (Hall of Fame Pitching Dataset (Continued))
+
+```{r}
+hofpitching <- hofpitching %>%
+  mutate(MidYear = (From + To) / 2)
+hofpitching.recent <- hofpitching %>%
+  filter(MidYear >= 1960)
+
+hofpitching.recent
+```
+
+```{r}
+# a)
+hofpitching <- hofpitching %>%
+  arrange(WAR.Season)
+hofpitching
+```
+```{r}
+# b)
+ggplot(hofpitching.recent, aes(x=WAR.Season, y = WAR.Season, label=X2)) + geom_text(angel=45)
+```
+
+#### Exercise 5 (Hall of Fame Pitching Dataset (Continued))
+
+```{r}
+# a)
+ggplot(hofpitching, aes(x=MidYear, y=WAR.Season)) + geom_point()
+```
+```{r}
+# c)
+ggplot(hofpitching, 
+       aes(x = MidYear, y = WAR.Season, label=X2)) +
+         geom_point() +
+      geom_text(data = filter(hofpitching, 
+              MidYear < 1900, WAR.Season < 2))
+```
 

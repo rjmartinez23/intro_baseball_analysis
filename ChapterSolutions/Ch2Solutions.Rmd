@@ -1,0 +1,120 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+library(Lahman)
+library(tidyverse)
+```
+
+
+#### Exercise 2 (Character, Factor, & Logical Variables in R)
+```{r}
+# a)
+outcomes <- c("Single", "Out", "Out", "Single", "Out", 
+              "Double", "Out", "Walk", "Out", "Single")
+```
+
+```{r}
+table(outcomes)
+```
+```{r}
+f.outcomes <- factor(outcomes,
+                     levels = c("Out", "Walk", "Single", "Double"))
+
+table(f.outcomes)
+```
+Results are now order by order specificed in the factor function()
+
+
+```{r}
+outcomes == "Walk"
+sum(outcomes == "Walk")
+# first one returns T/F as to where the value is located
+# second returns the number of times the value apears
+```
+
+#### Exercise 3 (Pitchers in the 350-Win Club)
+```{r}
+# a)
+W <- c(373, 354, 364, 417, 355, 373, 361, 363, 511)
+L <- c(208, 184, 310, 279, 227, 188, 208, 245, 316)
+Name <- c("Alexander", "Clemens", "Galvin", "Johnson", 
+          "Maddux", "Mathewson", "Nichols", "Spahn", "Young")
+
+#b) 
+Win.PCT <- 100 * (W/(W+L))
+Win.PCT
+```
+```{r}
+Wins.350 <- data.frame(Name, W, L, Win.PCT)
+Wins.350
+
+```
+  
+```{r}
+Wins.350 %>%
+  arrange(desc(Win.PCT)) -> Wins.350
+
+head(Wins.350, 1)
+tail(Wins.350, 1)
+```
+
+```{r}
+Name
+```
+#### Exercise 4 (Pitchers in the 350-Wins Club, continued)
+```{r}
+SO <- c(2198, 4672, 1806, 3509, 3371, 2502, 1868, 2583, 2803)
+BB <- c(951, 1580, 745, 1363, 999, 844, 1268, 1434, 1217)
+
+SO.BB.Ratio <- SO/BB
+SO.BB.Ratio
+```
+
+```{r}
+#c)
+SO.BB <- data.frame(Name, SO, BB, SO.BB.Ratio)
+SO.BB
+```
+
+```{r}
+SO.BB %>%
+  filter(SO.BB.Ratio > 2.8)
+```
+
+```{r}
+SO.BB %>%
+  arrange(BB)
+```
+
+```{r}
+Pitching %>%
+  head(5)
+```
+
+```{r}
+career.pitching <- Pitching %>%
+  group_by(playerID) %>%
+  summarize(SO = sum(SO, na.rm = TRUE),
+            BB = sum(BB, na.rm = TRUE),
+            IPouts = sum(IPouts, na.rm = TRUE),
+            midYear = median(yearID, na.rm = TRUE))
+
+
+```
+
+```{r}
+career.pitching %>%
+  inner_join(Pitching)
+```
+```{r}
+career.10000 <- career.pitching %>% filter(IPouts >= 10000)
+career.10000
+```
+```{r}
+ggplot(career.10000, aes(x=midYear, y=SO/BB)) + geom_point()
+```
+

@@ -12,7 +12,7 @@ library(ggplot2)
 ```
 
 ```{r}
-hofpitching <- read_csv("/Users/Ricky/Projects/intro_baseball_analysis/data/hofpitching.csv")
+hofpitching <- read_csv("../data/hofpitching.csv")
 ```
 
 
@@ -78,8 +78,6 @@ The two pitchers that standout with the highest WAR are Cy Young and Walter John
 hofpitching <- hofpitching %>%
   mutate(WAR.Season = WAR / Yrs)
 
-hofpitching
-
 ggplot(hofpitching, aes(BF.group,WAR.Season)) + geom_point() + coord_flip()
 ```
 
@@ -90,4 +88,182 @@ ggplot(hofpitching, aes(WAR.Season, BF.group)) + geom_boxplot()
 The more batters face shows a tendency of higher WAR
 
 #### Exercise 4 (Hall of Fame Pitching Dataset (Continued))
+
+```{r}
+hofpitching <- hofpitching %>%
+  mutate(MidYear = (From + To) / 2)
+hofpitching.recent <- hofpitching %>%
+  filter(MidYear >= 1960)
+
+hofpitching.recent
+```
+
+```{r}
+# a)
+hofpitching <- hofpitching %>%
+  arrange(WAR.Season)
+hofpitching
+```
+```{r}
+# b)
+ggplot(hofpitching.recent, aes(x=WAR.Season, y = WAR.Season, label=X2)) + geom_text(angel=45)
+```
+
+#### Exercise 5 (Hall of Fame Pitching Dataset (Continued))
+
+```{r}
+# a)
+ggplot(hofpitching, aes(x=MidYear, y=WAR.Season)) + geom_point()
+```
+```{r}
+# c)
+ggplot(hofpitching, 
+       aes(x = MidYear, y = WAR.Season, label=X2)) +
+         geom_point() +
+      geom_text(data = filter(hofpitching, 
+              MidYear < 1900, WAR.Season < 2))
+```
+
+#### 6 (Working with the Lahman Batting Dataset)
+```{r}
+#b)
+pull_player_ids <- function(first_name, last_name){
+  Master %>%
+  filter(nameFirst == first_name,
+         nameLast == last_name) %>%
+  select(playerID) %>% pull() -> player_id
+  
+  return(player_id)
+}
+
+# first lets get the player ids
+cobb_id <- pull_player_ids('Ty', 'Cobb')
+williams_id <- pull_player_ids('Ted', 'Williams')
+# there are two so only keeping first value
+Master %>% filter(nameLast == "Rose", 
+                  nameFirst == "Pete",
+                  birthYear == 1941) %>% 
+  select(playerID) %>% pull() -> rose_id
+
+# get Batting data for these hitters
+Batting %>%
+  filter(playerID %in%
+           c(cobb_id, williams_id, rose_id)) ->df
+
+df
+```
+
+```{r}
+# c)
+get_birthyear <- function(pid){
+  Master %>%
+    filter(playerID == pid) %>%
+    mutate(birthyear = ifelse(birthMonth >=7,
+                               birthYear + 1, birthYear)) %>%
+    select(playerID, birthyear)
+}
+
+bdates <- bind_rows(get_birthyear(cobb_id),
+                    get_birthyear(williams_id),
+                    get_birthyear(rose_id))
+
+df %>%
+  inner_join(bdates, by = "playerID") %>%
+  mutate(Age = yearID - birthyear) %>%
+  select(playerID, Age, H) %>%
+  group_by(playerID) %>%
+  mutate(CH = cumsum(H)) -> df
+
+df
+```
+
+```{r}
+# d)
+ggplot(filter(df, playerID == rose_id), aes(Age, CH)) + geom_line()
+```
+
+```{r}
+#e
+ggplot(df, 
+       aes(Age, CH, group = playerID, color = playerID)) +
+  geom_line()
+```
+
+```{r}
+
+```
+
+
+#### 7 (Working with the Retrosheet Play-by-Play Dataset)
+
+```{r}
+get_player_id_retro <- function(first_name, last_name){
+  Master %>%
+    filter(nameLast == last_name,
+           nameFirst == first_name) %>%
+    select(retroID) %>% pull() -> player_id
+  
+  return(player_id)
+}
+
+mac_id = get_player_id_retro('Mark', 'McGwire')
+sosa_id = get_player_id_retro('Sammy', 'Sosa')
+
+fields <- read_csv('../data/fields.csv')
+data1998 <- read_csv('../data/all1998.csv',
+                     col_names = pull(fields, Header))
+
+mac.data <- filter(data1998, BAT_ID==mac_id)
+sosa.data <- filter(data1998, BAT_ID==sosa_id)
+```
+
+
+```{r}
+#b) 
+mac.data <-filter(mac.data, BAT_EVENT_FL == TRUE)
+sosa.data <-filter(sosa.data, BAT_EVENT_FL == TRUE)
+```
+
+```{r}
+#c) 
+mac.data <- mutate(mac.data, PA = 1:nrow(mac.data))
+sosa.data <- mutate(sosa.data, PA = 1:nrow(sosa.data))
+```
+
+```{r}
+#d) 
+mac.HR.PA <- mac.data %>%
+  filter(EVENT_CD == 23) %>%
+  pull(PA)
+
+sosa.HR.PA <- sosa.data %>%
+  filter(EVENT_CD == 23) %>%
+  pull(PA)
+```
+
+```{r}
+#e) 
+mac.spacings <- diff(c(0, mac.HR.PA))
+sosa.spacings <- diff(c(0, sosa.HR.PA))
+```
+
+
+```{r}
+HR_Spacing <- rbind(data.frame(Player="McGwire",
+                               Spacing=mac.spacings),
+                    data.frame(Player="Sosa",
+                               Spacing=sosa.spacings))
+```
+
+
+```{r}
+ggplot(HR_Spacing, aes(Spacing)) +
+  geom_histogram() + facet_wrap(~ Player, ncol = 1)
+```
+
+```{r}
+HR_Spacing %>% group_by(Player) %>% 
+  summarize(M = median(Spacing))
+```
+
 
